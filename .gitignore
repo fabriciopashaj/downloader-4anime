@@ -2,3 +2,4 @@
 *.swo
 /videos
 .git/COMMIT_EDITMSG
+__pycache__/
