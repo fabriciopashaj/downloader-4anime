@@ -1,0 +1,4 @@
+*.swp
+*.swo
+/videos
+.git/COMMIT_EDITMSG
