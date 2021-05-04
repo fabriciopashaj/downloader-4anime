@@ -9,6 +9,9 @@ class Status(IntEnum):
 
 @dataclass(frozen=True, order=True)
 class Result():
+    # __slots__ = ["status", "value", "measage"]
     status: Status
     value: Any
     message: Optional[str] = ""
+    def __bool__(self):
+        return self.status == Status.OK
