@@ -1,0 +1,8 @@
+{
+	"ext": "*.py",
+	"watch": [
+		"src",
+		"tests"
+	],
+	"exec": "python tests/stream.py"
+}
