@@ -3,3 +3,4 @@
 /videos
 .git/COMMIT_EDITMSG
 __pycache__/
+*.egg-info

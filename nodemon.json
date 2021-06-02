@@ -4,5 +4,5 @@
 		"src",
 		"tests"
 	],
-	"exec": "python tests/stream.py"
+	"exec": "for test in tests/*; do python $test; done"
 }
