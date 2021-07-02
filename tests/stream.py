@@ -1,12 +1,14 @@
-import sys, os
-sys.path.append(os.path.expandvars('.'))
+import os
 
-from src import Stream, Status
+from downloader_4anime import Stream, Status
+from downloader_4anime.cacher import AnimeDescriptor
 
 local = os.path.expandvars("$HOME/python/downloader-4anime")
-stream = Stream('Naruto-Shippuden', 97, 1024 << 4)
+stream = Stream(AnimeDescriptor('Naruto-Shippuden', 'v5.4animu.me', 750),
+		 104, 1024 << 4)
 print(stream)
 stream.on('connect', lambda s: print('Listener 1'))
 stream.on('connect', lambda s: print('Listener 2'))
-
-print(stream.download(open('/sdcard/' + stream.video_name, 'wb+')))
+print(stream.proxy)
+print(stream.url)
+print(stream.download(open('/sdcard/Naruto-Shippuden-104.mp4', 'ab+')))

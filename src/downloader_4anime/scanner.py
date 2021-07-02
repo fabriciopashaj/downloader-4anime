@@ -21,6 +21,16 @@ class Scanner(object):
 			return Result(Status.OK, self.cache["source"])
 		else:
 			return self.extract_source()
+	def get_nams(self):
+		if "source" in self.cache:
+			return Result(Status.OK, self.cache["source"].split("/")[2])
+		else:
+			return self.extract_name()
+	def extract_name(self):
+		if source := self.extract_source():
+			return Result(Status.OK, source.value.split("/")[2])
+		else:
+			return source
 	def get_links(self):
 		if "links" in self.cache:
 			return Result(Status.OK, self.cache["links"])

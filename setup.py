@@ -18,6 +18,10 @@ setup(
 		},
 		license='MIT',
 		license_files=['LICENSE'],
+		entry_points={
+			'console_scripts': [
+				'animedl=downloader_4anime.__main__:main']
+		},
 		platform=["any"],
 		classifiers=[
 			"Development Status :: 3 - Development/Stable",

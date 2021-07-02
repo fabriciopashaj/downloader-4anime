@@ -7,6 +7,9 @@ MAX_UNCOMMITED_ISERTIONS = 1
 MAX_UNCOMMITED_UPDATES = 1
 
 class Cacher(sqlite3.Connection):
+	"""
+	A cache manager for anime that uses sqlite3 to cache extracted anime data to a database
+	"""
 	FILE = os.getenv("HOME") + '/anime.db'
 	def __init__(self):
 		first_time = not os.path.isfile(self.FILE)
@@ -18,10 +21,19 @@ class Cacher(sqlite3.Connection):
 			self.setup()
 	def __exit__(self, type, value, traceback):
 		sqlite3.Connection.close(self)
+	def __len__(self):
+		cursor = self.execute("SELECT ROWID FROM ANIME_DATA")
+		length = cursor.fetchall()[-1][0]
+		cursor.close()
+		return length
 	def close(self):
 		self.commit()
 		sqlite3.Connection.close(self)
 	def register_anime(self, name: str, source: str, ep_count: int, cache=True):
+		"""
+		Registers an anime to the database
+		name
+		"""
 		cursor = self.execute(f"""
 		INSERT INTO ANIME_DATA
 		VALUES ('{name}', '{source}', {ep_count})
@@ -57,7 +69,7 @@ class Cacher(sqlite3.Connection):
 				if self.__uncommited_upd >= MAX_UNCOMMITED_UPDATES:
 					self.commit()
 					self.__uncommited_upd = 0
-	def get_anime_data(self, iname: str, cache=True) -> AnimeDescriptor:
+	def get_anime_by_name(self, iname: str, cache=True) -> AnimeDescriptor:
 		if cache and iname in self.__cache:
 			return self.__cache[iname]
 		else:
@@ -69,17 +81,31 @@ class Cacher(sqlite3.Connection):
 			data = cursor.fetchall()
 			if len(data) == 0:
 				return None
+			anime = AnimeDescriptor(*data[0])
 			if cache:
-				anime = AnimeDescriptor(*data[0])
 				self.__cache[iname] = anime
-				return anime
-
+			return anime
+	def get_anime_by_id(self, anime_id: int, cache=True) -> AnimeDescriptor:
+		cursor = self.execute(f"""
+		SELECT NAME, SOURCE, EP_COUNT
+		FROM ANIME_DATA
+		WHERE ROWID = {anime_id}
+		""")
+		data = cursor.fetchall()
+		if len(data) == 0:
+			return None
+		else:
+			anime = AnimeDescriptor(*data[0])
+			if cache:
+				self.__cache[anime.name.lower()] = anime
+			return anime
+	
 	def setup(self):
 		cursor = self.execute("""
 		CREATE TABLE ANIME_DATA
-		(NAME TEXT,
-		SOURCE TEXT,
-		EP_COUNT INTEGER)
+		(NAME TEXT NOT NULL UNIQUE,
+		SOURCE TEXT NOT NULL,
+		EP_COUNT INTEGER NOT NULL)
 		""")
 		self.register_anime('Naruto-Shippuden', 'v5.4animu.me', 750)
 

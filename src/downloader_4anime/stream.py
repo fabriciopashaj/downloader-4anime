@@ -1,29 +1,24 @@
-import io
 from urllib.request import Request, urlopen
+import io
 import urllib.error
-import re
-from .handling import Result, Status
-from .util import format_source, length
-from .events import EventEmitter
 
-function = type(lambda: None)
+from .handling import Result, Status
+from .util import length
+from .events import EventEmitter
+from .cacher import Cacher, AnimeDescriptor
 
 class Stream(EventEmitter):
-	def __init__(self, name: str, episode: int, chunk_size: int = 1024 << 2):
-		self._name = name
+	def __init__(self, anime: AnimeDescriptor, episode: int,
+			chunk_size: int = 1024 << 2):
+		self._anime = anime
 		self._ep = episode
 		self._chunk_size = chunk_size
-		self._req = Request(self.url, headers={
+		self._req = Request(self.proxy, headers={
 			'User-Agent': 'Mozilla/5.0',
-			'Connection': 'Keep-Alive'
+			# 'Connection': 'Keep-Alive'
 		})
 		self._conn = None
-		EventEmitter.__init__(self, [
-				'connect',
-				'end',
-				'download',
-				'data'
-				])
+		EventEmitter.__init__(self, ['connect', 'end', 'download', 'data'])
 	
 	def _connect(self):
 		try:
@@ -51,7 +46,7 @@ class Stream(EventEmitter):
 	
 	def download(self, outfile: io.TextIOWrapper) -> Result:
 		if outfile.closed:
-			result = Result(Status.FILE_CLOSED, out)
+			result = Result(Status.FILE_CLOSED, outfile)
 			self.emit('download', result);
 			return result
 		if outfile.mode.startswith('r'):
@@ -67,24 +62,33 @@ class Stream(EventEmitter):
 				return st
 			else:
 				self.__conn = st.value
-			
+		bytes_written = 0;
+		self.emit("download", Result(Status.OK, outfile))
 		for chunk in self:
 			self.emit('data', chunk)
 			outfile.write(chunk)
-		result = Result(Status.OK, outfile.name)
+			bytes_written += len(chunk)
+		if bytes_written >= int(self.__conn.headers['Content-Length']):
+			result = Result(Status.OK, outfile)
+		else:
+			result = Result(Status.DISCONNECTED, outfile,
+											"The connection was aborted," +
+											"check your internet connection")
 		self.emit('end', result)
 		return result
 		
 	@property
 	def url(self):
-		return format_source(self._name, self._ep)
+		return 'https://4anime.to/{}-episode-{}'.format(self._anime.name.lower(),
+				self._ep)
 	
 	@property
-	def video_name(self):
-		return "{}-Episode-{}-1080p.mp4".format(self._name, self._ep)
+	def proxy(self):
+		return 'https://{}/{}/{}-Episode-{}-1080p.mp4'.format(self._anime.src,
+				self._anime.name, self._anime.name, self._ep)
 	
 	def __repr__(self):
-		return "%s('%s', %i)" % (type(self).__name__, self._name, self._ep)
+		return "%s('%s', %i)" % (type(self).__name__, self._anime.name, self._ep)
 	
 	def __call__(self, chunk_size: int = None):
 		self._chunk_size = chunk_size if chunk_size is not None else self._chunk_size
@@ -96,7 +100,10 @@ class Stream(EventEmitter):
 	def __next__(self):
 		if self._conn == None:
 			raise StopIteration()
-		chunk = self.__conn.read(self._chunk_size)
+		try:
+			chunk = self.__conn.read(self._chunk_size)
+		except ConnectionAbortedError:
+			raise StopIteration()	
 		if chunk != b'':
 			return chunk
 		else:

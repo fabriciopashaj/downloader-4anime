@@ -1,7 +1,5 @@
 from unittest import TestCase, main
-import sys, os
-sys.path.append(os.path.expanduser(os.path.dirname(__file__) + '/..'))
-from src.scanner import Scanner
+from downloader_4anime.scanner import Scanner
 
 class ScannerTest(TestCase):
 	def setUp(self):

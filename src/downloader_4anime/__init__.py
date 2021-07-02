@@ -4,3 +4,6 @@ __email__ = "fabriciopashaj.dev@gmail.com"
 
 from .stream import Stream
 from .handling import Status, Result
+from .anime import Anime
+from .cacher import Cacher
+from .scanner import Scanner
