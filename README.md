@@ -1,5 +1,8 @@
 # downloader-4anime
 Automated anime downloader for downloading anime from the [*4anime.to*](https://4anime.to/) website
+-------------------------------------------------------------------------------
+# WARNING: The library doesn't work anymore since the website was taken down.
+-------------------------------------------------------------------------------
 ## Install
 ```bash
 pip install downloader-4anime
